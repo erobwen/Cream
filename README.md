@@ -11,3 +11,5 @@ You have to add Containable behaviour in your AppModel for Cream to work.
 This git repository is an installation of CakePHO 2.7.0 RC, that way it is easier to clone the repository and try Cream out without tedious setup. 
 However! the only essential file for Cream is Entity.php that resides in Model/Entity/ directory, so if you want cream in your project, simply copy this file into your project. See requirements for additional requirements. (to date, the only additional requirement is that you need to add Containable behaviour in your AppModel)
 
+# Demonstration
+In order to try out Cream, you can run actions in the DemoController, for example by url "http://localhost/cream/demo/multi_table". However, currently many of the actions are commented out, since they dependend on models from the project where Cream was originally created. In the future these demo actions will be updated.  
