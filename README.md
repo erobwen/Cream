@@ -1,6 +1,8 @@
 # Cream
 An advanced ORM supporting real OOP working as a plugin on top of CakePHP 2. It supports single and multi table inheritance, and gives a lot of features with no additional costs.  
 
+See included file Cream.pptx for an overview of the features of Cream.
+
 # Compatibility:
 Cream is developed for 2.7.0 RC and for 2.4.6, so we may assume that it it is compatible with Cake versions in between. 
 
