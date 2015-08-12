@@ -1,5 +1,5 @@
-# Repository organization. 
-This git repository is an installation of CakePHO 2.7.0 RC, that way it is easier to clone the repository and try Cream out without tedious setup. 
+# Repository organization
+This git repository is an installation of CakePHP 2.7.0 RC, that way it is easier to clone the repository and try Cream out without tedious setup. 
 
 However! the only essential file for Cream is:
 
