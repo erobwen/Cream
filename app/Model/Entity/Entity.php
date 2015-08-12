@@ -6,15 +6,19 @@
 /**
 * List all non abstract classes. 
 */
-// App::uses('ActivationTestEntity', 'Model/Entity'); // Abstract, cannot be initialized (because model has a 'class' column
-App::uses('UpgradeJobProductListEntity', 'Model/Entity');
-App::uses('ProductListEntityEntity', 'Model/Entity');
-App::uses('UpgradeJobEntityEntity', 'Model/Entity');
+App::uses('AlphaActivityEntity', 'Model/Entity');
+App::uses('ActivityEntity', 'Model/Entity');
 
-// App::uses('TestCaseEntityEntity', 'Model/Entity'); // Abstract, cannot be initialized (because model has a 'class' column
-App::uses('BatchActivationEntity', 'Model/Entity');
-App::uses('ActivationSequenceEntity', 'Model/Entity');
 
+/**
+* Notes:
+* Bevare of translation where there are numbers in fields. For example fooBar1 translates to foo_bar1 and NOT foo_bar_1 
+*/
+
+
+/**
+* Convenience interface
+*/
 // public function createEntity($modelName, $class = '', $customOptionalArguments=array()) {
 	// return Entity::create($modelName, $class, $customOptionalArguments);
 // }
@@ -236,7 +240,7 @@ class Entity {
 	}
 	
 	
-	public static function createEntityObjectFromRoles($roles, $initArguments = null) {
+	public static function createEntityObjectFromRoles($roles, $initData = null) {
 		$primaryRole = $roles[0];
 		$columnClass = get($primaryRole['data'], 'class');
 		$columnClass = ($columnClass == null) ? null : Inflector::classify($columnClass);
@@ -248,8 +252,9 @@ class Entity {
 		$entity = $reflectionClass->newInstanceArgs(array($roles));
 		$entity->phpClassName = $phpClassName;
 		$entity->entityClassName = $entityClass;
-		if ($initArguments != null) {
-			$entity->init($initArguments);
+		// pr($initData);die;
+		if ($initData != null) {
+			$entity->init($initData);
 		}
 		foreach($roles as $role) {
 			self::$roleIdEntityMap[$role['roleId']] = $entity;
@@ -321,13 +326,13 @@ class Entity {
 			self::getModels($relatedModelName, $relatedModelPrimaryKeyValue, $roles);
 		}
 	}
-	                                          
+	                      
 	
-	// Create a new one by Entity::create('TestCase', $initArguments, 'some_specific_class');
+	// Create a new one by Entity::create('TestCase', $initData, 'some_specific_class');
 	public static function create($modelName, $options = array()) {
 		// pr($options);
 		$class = get($options, 'class');
-		$initArguments = get($options, 'initArguments', array());
+		$initData = get($options, 'initData', array());
 		
 		// Setup roles
 		$data = null;
@@ -342,7 +347,7 @@ class Entity {
 		self::createRoles($modelName, $data, $roles);
 		// pr($roles);
 		// Create entity object. 
-		return self::createEntityObjectFromRoles($roles, $initArguments);
+		return self::createEntityObjectFromRoles($roles, $initData);
 	}
 	
 	
@@ -442,7 +447,9 @@ class Entity {
 	*/
 	
 	// To initalize an entity use init instead of overriding the constructor. This is because the constructor runs every time the entity is loaded from the database. Hence, constructive work needs to be done in a special 'init' function
-	public function init() {}
+	public function init($initData) {
+		// pr("Entity!");
+	}
 
 
 	/**
@@ -1054,7 +1061,8 @@ class Entity {
 			
 			// Is it a property.
 			$tableColumnName = Inflector::underscore($propertyOrRelation);
-			if (isset($roleData[$tableColumnName])){
+			// pr($tableColumnName);
+			if (array_key_exists($tableColumnName, $roleData)){
 				if ($command == 'get') {
 					return $roleData[$tableColumnName];			
 				}

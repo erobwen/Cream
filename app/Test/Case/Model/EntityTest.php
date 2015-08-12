@@ -21,8 +21,18 @@ class EntityTest extends ControllerTestCase {
 		// $this->TestCase = ClassRegistry::init('TestCase');
     }
 	
-	public function testMultiTableInheritance() {
-		$this->assertEquals(true, true);
+	public function testMultiTableConstruction() {
+		$title = "Some Title";
+		$description = "Some Content";
+		$alphaFieldOne = "Alpha field 1 contents";
+		
+		$alphaActivity = Entity::create('AlphaActivity', array('initData' => array('title' => $title, 'description' => $description, 'alphaFieldOne' => $alphaFieldOne)));
+		// pr($alphaActivity->serialize());
+		// $alphaActivity->printRoles();
+		// die;
+		$this->assertEquals($alphaActivity->title(), $title);
+		$this->assertEquals($alphaActivity->description(), $description);
+		$this->assertEquals($alphaActivity->alphaFieldOne(), $alphaFieldOne);
 	}
 }
 		

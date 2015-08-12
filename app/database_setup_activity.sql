@@ -39,8 +39,8 @@ CREATE TABLE alpha_activities (
 	id MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	activity_id MEDIUMINT UNSIGNED DEFAULT NULL,
 
-	alpha_field_1 VARCHAR(100) DEFAULT "Alpha field 1 default",
-	alpha_field_2 VARCHAR(100) DEFAULT "Alpha field 2 default",
+	alpha_field_one VARCHAR(100) DEFAULT "Alpha field one default",
+	alpha_field_two VARCHAR(100) DEFAULT "Alpha field two default",
 	
 	some_detail_id MEDIUMINT UNSIGNED DEFAULT NULL,
 	
