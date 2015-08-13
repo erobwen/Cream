@@ -88,7 +88,7 @@ class Entity {
 		if (!property_exists($model, 'extends')) {
 			$model->{'extends'} = null;
 		}
-		if (!property_exists($model, 'extendsTo')) {
+		if (!property_exists($model, 'extendTo')) {
 			$model->{'extendTo'} = array();
 		}
 		return $model;
@@ -105,6 +105,7 @@ class Entity {
 		// pr(array('conditions' => array($model->primaryKey => $primaryKeyValue)));
 		// $model->{$model->primaryKey} => $primaryKeyValue;
 		$data = $model->find('first', array('conditions' => array($model->name . "." . $model->primaryKey => $primaryKeyValue)));
+		// pr($data);
 		$model->resetBindings();
 		// pr("Foobar");
 		
@@ -167,7 +168,7 @@ class Entity {
 		return array('primaryKeyValue' => $primaryKeyValue, 'primitiveData' => $primitiveData, 'foreignKeys' => $foreignKeys);
 	}
 	
-	
+	/*
 	public function getAssociationsToModel($model, $modelName) {
 		$result = array();
 		foreach ($model->_associations as $assoc) {
@@ -182,6 +183,7 @@ class Entity {
 		// prd($result);
 		return $result;
 	} 
+	*/
 	
 	public function getMirrorRelation($model, $relatedModelName, $sourceRelationName, $foreignKey) {
 		foreach ($model->_associations as $assoc) {
@@ -265,7 +267,7 @@ class Entity {
 	}
 	
 	// Load an existing entity by using Entity::get('TestCase', $id);
-	public static function get($modelName, $id, $data = null) {
+	public static function get($modelName, $id) {
 		// pr("=== Get a new entity ===");
 		// pr($modelName);
 		// pr($id);
@@ -277,22 +279,20 @@ class Entity {
 			// pr("Existing");
 			return self::$roleIdEntityMap[$roleId];
 		} else {
-			// pr("New one");
+			// pr($modelName);
 			$model = self::getModel($modelName);
-			// pr($model);
 			
 			// Search for more specific model (recursivley)
 			if(!empty($model->extendTo)) {
 				$relatedDatas = array();
 				foreach($model->extendTo as $relatedModelAlias) {
-					$relatedModel = self::getModel($model->getAssociated($distinctModelAlias)['className']);	
-					$relatedDatas[$relatedModelAlias] = array('data' => self::getRelatedData($model, $id, $model->extendTo, $relatedModel), 'model' => $relatedModel);
+					$relatedModel = self::getModel($model->getAssociated($relatedModelAlias)['className']);	
+					$relatedDatas[$relatedModelAlias] = array('data' => self::getRelatedData($model, $id, $relatedModelAlias, $relatedModel), 'model' => $relatedModel);
 				}
 				foreach($relatedDatas as $extendToAlias => $relatedData) {
 					if ($relatedData['data'] != null) {
 						$relatedModelName = $model->getAssociated($extendToAlias)['className'];
 						$entity = self::get($relatedModelName, $relatedData['data'][$relatedData['model']->primaryKey], $relatedData['data']);
-						self::$roleIdEntityMap[$roleId] = $entity;
 						return $entity;
 					}
 				}
@@ -300,14 +300,12 @@ class Entity {
 				// Get models
 				$roles = array();
 				self::getModels($modelName, $id, $roles);
-				$data = $roles[0]['data'];
 						
 				// Create Entity
 				return self::createEntityObjectFromRoles($roles);
 			}
 		}
 	}
-	
 	
 	public static function getModels($modelName, $primaryKeyValue, &$roles) {
 		$model = self::getModel($modelName);
@@ -324,11 +322,16 @@ class Entity {
 		if ($model->extends != null) {
 			$relatedModelName = $model->getAssociated($model->extends)['className'];
 			$relatedModel = self::getModel($relatedModelName);
-			$relatedModelPrimaryKeyValue = $data[$model->extends][$relatedModel->primaryKey];
+			$relatedData = self::getRelatedData($model, $primaryKeyValue, $model->extends, $relatedModel);
+			// pr($relatedData);
+			$relatedModelPrimaryKeyValue = $relatedData[$relatedModel->primaryKey];
+			// pr($relatedModelPrimaryKeyValue);
+			// pr($relatedModelName);
+			// die;
 			self::getModels($relatedModelName, $relatedModelPrimaryKeyValue, $roles);
 		}
 	}
-	                      
+	
 	
 	// Create a new one by Entity::create('TestCase', $initData, 'some_specific_class');
 	public static function create($modelName, $initData = array()) {
@@ -353,7 +356,7 @@ class Entity {
 	}
 	
 	
-	public static function createRoles($modelName, $data, &$roles) {
+	public static function createRoles($modelName, $data, &$roles, $previousRole = null) {
 		// Create entry in database
 		// pr($modelName);
 		$model = self::getModel($modelName);
@@ -368,16 +371,58 @@ class Entity {
 		}
 		
 		// Create role
-		$roles[] = self::createRole($model, $model->id);
+		$role = self::createRole($model, $model->id);
+		$roles[] = $role;
 
+		if ($previousRole != null) {
+			self::connectRoles($previousRole, $role);
+		}
+		
 		// Create the less specific role
 		// pr($model->extends);
 		if ($model->extends != null) {
 			// pr("Found associated!");
 			$relatedModelName = $model->getAssociated($model->extends)['className'];
-			self::createRoles($relatedModelName, null, $roles);
+			self::createRoles($relatedModelName, null, $roles, $role);
 		}
 	}
+	
+	
+	public static function connectRoles($moreSpecific, $lessSpecific) {
+		$moreSpecificModel = $moreSpecific['model'];
+		$forwardAssociationType = $moreSpecificModel->getAssociated()[$moreSpecificModel->extends];
+		$forwardAssociation = $moreSpecificModel->getAssociated($moreSpecificModel->extends);
+
+		$lessSpecificModel = $lessSpecific['model'];
+		
+		if ($forwardAssociationType == 'belongsTo') {
+			// Update foreign keys record
+			$moreSpecific['foreignKeys'][$forwardAssociation['foreignKey']] = $lessSpecific['primaryKeyValue'];
+			
+			// Save to database
+			$moreSpecificModel->{$moreSpecificModel->primaryKey} = $moreSpecific['primaryKeyValue'];		
+			$moreSpecificModel->saveField($forwardAssociation['foreignKey'], $lessSpecific['primaryKeyValue']);
+		} else if ($forwardAssociationType == 'hasOne') {
+			// Find reverse relation
+			$backwardAssociation = null;
+			foreach($lessSpecificModel->{$assoc} as $relationName => $relationInfo) {
+				if ($relationInfo['className'] == $moreSpecific['modelName']) {
+					$backwardAssociation = $relationInfo;
+				}
+			}
+			
+			// Update foreign keys record
+			$moreSpecific['foreignKeys'][$backwardAssociation['foreignKey']] = $lessSpecific['primaryKeyValue'];
+			
+			// Save to database
+			$lessSpecificModel->{$lessSpecificModel->primaryKey} = $lessSpecific['primaryKeyValue'];
+			$lessSpecificModel->saveField($backwardAssociation['foreignKey'], $moreSpecific['primaryKeyValue']);
+		} else {
+			pr("Cannot extend multiple instances of base model! This should never happen!");
+			die;
+		}
+	}
+	
 	
 	public static function createRole($model, $primaryKeyValue) {
 		$data = self::getPrimitiveData($model, $primaryKeyValue); // Load data, for synchronization (with databases default values)
@@ -458,8 +503,7 @@ class Entity {
 
 	/**
 	* Basic properties
-	*/
-	
+	*/	
 	public function entityId() {
 		return $this->roles[0]['roleId'];
 	}
@@ -480,18 +524,6 @@ class Entity {
 		}
 	}
 	
-	public function getMergedId() {
-		$result = null;
-		foreach($this->roles as &$role){
-			if ($result == null) {
-				$result = $role['primaryKeyValue'];
-			} else {
-				$result .= ", " . $role['primaryKeyValue'];
-			}
-		}
-		return $result;
-	}
-
 	
 	/**
 	* Selection
@@ -1165,6 +1197,7 @@ class Entity {
 						} else if ($associationType == 'hasAndBelongsToMany') {
 							pr("This part of the code is not tested yet, continue at own risk.");
 							die;
+							/*
 							$oldValue = $this->{$relatedModelAlias}();
 							$newIdArray = array();
 							foreach($newValue as $newEntity) {
@@ -1185,6 +1218,7 @@ class Entity {
 									}									
 								}
 							}
+							*/
 						}
 						// pr($role['foreignKeys']);
 						$this->relationCache[$relatedModelAlias] = $newValue;
@@ -1217,6 +1251,8 @@ class Entity {
 			}
 		}
 		return "Unknown property or relation '" . $method . "'";
-    }	
+    }
+	
+	
 }
 
