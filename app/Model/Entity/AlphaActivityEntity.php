@@ -2,7 +2,7 @@
 /**
 * Entity class that corresponds to one (or several in the case of inheritance) model records.
 */
-App::uses('Entity', 'Model/Entity');
+App::uses('ActivityEntitys', 'Model/Entity');
 
 class AlphaActivityEntity extends ActivityEntity
 {	

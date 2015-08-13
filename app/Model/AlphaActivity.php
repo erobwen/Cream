@@ -8,6 +8,8 @@ class AlphaActivity extends AppModel
 
 	public $belongsTo = array(
 		'Activity',
-		'SomeDetail'
+		'SomeDetail' => array(
+			'dependent' => true
+		)
  	);
 }

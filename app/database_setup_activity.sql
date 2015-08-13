@@ -16,6 +16,18 @@ CREATE TABLE users (
 	PRIMARY KEY(id)
 );
 
+DROP TABLE IF EXISTS vehicles;
+CREATE TABLE vehicles (
+	id MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	
+	class VARCHAR(100) DEFAULT "car", /* values: 'car', 'boat', 'tricycle' */
+	
+	name VARCHAR(1024) DEFAULT "Default Vehicle Name",
+
+	PRIMARY KEY(id)
+)
+
+
 /* Activity base model */
 DROP TABLE IF EXISTS activities;
 CREATE TABLE activities (

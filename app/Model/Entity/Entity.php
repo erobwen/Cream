@@ -8,6 +8,8 @@
 */
 App::uses('AlphaActivityEntity', 'Model/Entity');
 App::uses('ActivityEntity', 'Model/Entity');
+App::uses('BoatEntity', 'Model/Entity');
+App::uses('CarEntity', 'Model/Entity');
 
 
 /**
@@ -329,10 +331,10 @@ class Entity {
 	                      
 	
 	// Create a new one by Entity::create('TestCase', $initData, 'some_specific_class');
-	public static function create($modelName, $options = array()) {
+	public static function create($modelName, $initData = array()) {
 		// pr($options);
-		$class = get($options, 'class');
-		$initData = get($options, 'initData', array());
+		$class = get($initData, 'class', null);
+		unset($initData['class']);
 		
 		// Setup roles
 		$data = null;
@@ -448,7 +450,9 @@ class Entity {
 	
 	// To initalize an entity use init instead of overriding the constructor. This is because the constructor runs every time the entity is loaded from the database. Hence, constructive work needs to be done in a special 'init' function
 	public function init($initData) {
-		// pr("Entity!");
+		foreach($initData as $key => $value) {
+			$this->{$key}($value);
+		}
 	}
 
 
@@ -1040,8 +1044,13 @@ class Entity {
 			$propertyOrRelation = substr($method, 6);
 			$command = "remove";
 		} else {
-			$propertyOrRelation = $method;
-			$command = "get";
+			if (empty($args)) {
+				$propertyOrRelation = $method;
+				$command = "get";
+			} else {
+				$propertyOrRelation = $method;
+				$command = "set";				
+			}
 		}
 		// pr("PropertyOrRelation: " . $propertyOrRelation);
 		// pr("Command: " . $command);
