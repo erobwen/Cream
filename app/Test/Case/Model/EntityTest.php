@@ -65,15 +65,19 @@ class EntityTest extends ControllerTestCase {
 	public function testSingleRelation() {
 		$alpha = Entity::create('AlphaActivity');
 		$detail = Entity::create('SomeSpecificDetail', array('specificDetailField' => 'my value'));
+		$detail->printRoles();
 		$alpha->setSomeDetail($detail);
-		// pr($alpha->serialize());
-		// $alpha->printRoles();
-		// die;
 		$this->assertEquals("my value", $alpha->SomeDetail()->specificDetailField());
-		
+
 		$alpha->setSomeDetail(null);
 		$this->assertEquals(null, $alpha->SomeDetail());
+		$alpha->setSomeDetail($detail);
 		
+		// Restart 
+		$alphaRole = $alpha->getRole('AlphaActivity');
+		Entity::restart();
+		$loadedAlpha = Entity::get($alphaRole['modelName'], $alphaRole['primaryKeyValue']);
+		$this->assertEquals("my value", $loadedAlpha->SomeDetail()->specificDetailField());
 	}
 	
 	
@@ -122,7 +126,7 @@ class EntityTest extends ControllerTestCase {
 				),
 			  ),
 			);
-		// $this->assertEquals($expected, $alpha->serialize());
+		$this->assertEquals($expected, $alpha->serialize());
 		
 		// Removal of child
 		$alpha->removeChildActivity($beta);

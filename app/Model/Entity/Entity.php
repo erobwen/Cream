@@ -352,11 +352,15 @@ class Entity {
 		self::createRoles($modelName, $data, $roles);
 		// pr($roles);
 		// Create entity object. 
+		// pr(self::sRoles($roles));
+		// die;
 		return self::createEntityObjectFromRoles($roles, $initData);
 	}
 	
 	
-	public static function createRoles($modelName, $data, &$roles, $previousRole = null) {
+	public static function createRoles($modelName, $data, &$roles, &$previousRole = null) {
+		// pr("Create roles:" . $modelName);
+		// pr(self::sRoles($roles));
 		// Create entry in database
 		// pr($modelName);
 		$model = self::getModel($modelName);
@@ -372,14 +376,14 @@ class Entity {
 		
 		// Create role
 		$role = self::createRole($model, $model->id);
-		$roles[] = $role;
+		$roles[] = &$role;
 
 		if ($previousRole != null) {
 			self::connectRoles($previousRole, $role);
 		}
-		
+		// pr(self::sRoles($roles));
+
 		// Create the less specific role
-		// pr($model->extends);
 		if ($model->extends != null) {
 			// pr("Found associated!");
 			$relatedModelName = $model->getAssociated($model->extends)['className'];
@@ -388,16 +392,19 @@ class Entity {
 	}
 	
 	
-	public static function connectRoles($moreSpecific, $lessSpecific) {
+	public static function connectRoles(&$moreSpecific, &$lessSpecific) {
+		// pr("Connect roles");
 		$moreSpecificModel = $moreSpecific['model'];
 		$forwardAssociationType = $moreSpecificModel->getAssociated()[$moreSpecificModel->extends];
 		$forwardAssociation = $moreSpecificModel->getAssociated($moreSpecificModel->extends);
-
 		$lessSpecificModel = $lessSpecific['model'];
 		
-		if ($forwardAssociationType == 'belongsTo') {
+		if ($forwardAssociationType == 'belongsTo') {			
+			// pr($lessSpecific['primaryKeyValue']);
+			// pr($forwardAssociation['foreignKey']);
 			// Update foreign keys record
 			$moreSpecific['foreignKeys'][$forwardAssociation['foreignKey']] = $lessSpecific['primaryKeyValue'];
+			// pr($moreSpecific['foreignKeys']);
 			
 			// Save to database
 			$moreSpecificModel->{$moreSpecificModel->primaryKey} = $moreSpecific['primaryKeyValue'];		
@@ -405,14 +412,14 @@ class Entity {
 		} else if ($forwardAssociationType == 'hasOne') {
 			// Find reverse relation
 			$backwardAssociation = null;
-			foreach($lessSpecificModel->{$assoc} as $relationName => $relationInfo) {
+			foreach($lessSpecificModel->belongsTo as $relationName => $relationInfo) {
 				if ($relationInfo['className'] == $moreSpecific['modelName']) {
 					$backwardAssociation = $relationInfo;
 				}
 			}
 			
 			// Update foreign keys record
-			$moreSpecific['foreignKeys'][$backwardAssociation['foreignKey']] = $lessSpecific['primaryKeyValue'];
+			$lessSpecific['foreignKeys'][$backwardAssociation['foreignKey']] = $moreSpecific['primaryKeyValue'];
 			
 			// Save to database
 			$lessSpecificModel->{$lessSpecificModel->primaryKey} = $lessSpecific['primaryKeyValue'];
@@ -421,6 +428,7 @@ class Entity {
 			pr("Cannot extend multiple instances of base model! This should never happen!");
 			die;
 		}
+		// pr("---");
 	}
 	
 	
@@ -509,11 +517,14 @@ class Entity {
 	}
 	
 	public function getPrimaryKeyForModel($modelName) {
+		pr("Get primary key for model". $modelName);
 		foreach($this->roles as $role) {
+			pr($role['modelName']);
 			if ($role['modelName'] == $modelName) {
 				return $role['primaryKeyValue'];
 			} 
 		}
+		die;
 	}
 
 	public function getRole($modelName) {
@@ -959,16 +970,7 @@ class Entity {
 	}
 	
 	public function printRoles() {
-		$printedRoles = array();
-		foreach($this->roles as $role) {
-			$printedRoles[] = array(
-				'roleId' => $role['roleId'],
-				'modelName' => $role['modelName'],
-				'primaryKeyValue' => $role['primaryKeyValue'],
-				'data' => $role['data'],
-				'foreignKeys' => $role['foreignKeys']
-			);
-		}
+		$printedRoles = self::sRoles($this->roles);
 		$printedRelationCache = array();
 		foreach($this->relationCache as $relation => $value) {
 			if (is_object($value)) {
@@ -994,6 +996,25 @@ class Entity {
 			'roles' => $printedRoles,
 			'relations' => $printedRelationCache);				
 		pr($data);
+	}
+	
+	public static function sRoles($roles) {
+		$simplifiedRoles = array();
+		foreach($roles as $role) {
+			$simplifiedRoles[] = self::sRole($role);
+		}	
+		return $simplifiedRoles;
+	}
+
+	
+	public static function sRole($role) {
+		return array(
+			'roleId' => $role['roleId'],
+			'modelName' => $role['modelName'],
+			'primaryKeyValue' => $role['primaryKeyValue'],
+			'data' => $role['data'],
+			'foreignKeys' => $role['foreignKeys']
+		);
 	}
 	
 	
@@ -1160,11 +1181,17 @@ class Entity {
 							// Store abandoned value
 							$oldValue = $this->{$relatedModelAlias}();
 							$oldRelatedId = ($oldValue != null) ? $oldValue->getPrimaryKeyForModel($relatedModelName) : null;
+							// $newValue->printRoles();
 
 							// Change this entity/model to point to new
+							// pr($relatedModelName);
+							// pr($newValue->getPrimaryKeyForModel($relatedModelName));
 							$newRelatedId = ($newValue != null) ? $newValue->getPrimaryKeyForModel($relatedModelName) : null;
-							$model->{$model->primaryKey} = $primaryKeyValue;
 							$role['foreignKeys'][$relatedRoleAssociation['foreignKey']] = $newRelatedId;
+							$model->{$model->primaryKey} = $primaryKeyValue;
+							// pr("Saving");
+							// pr($relatedRoleAssociation['foreignKey']);
+							// pr($newRelatedId);
 							$model->saveField($relatedRoleAssociation['foreignKey'], $newRelatedId);
 	
 							// Clear caches for peers.
