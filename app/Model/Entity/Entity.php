@@ -15,6 +15,7 @@ App::uses('CarEntity', 'Model/Entity');
 /**
 * Notes:
 * Bevare of translation where there are numbers in fields. For example fooBar1 translates to foo_bar1 and NOT foo_bar_1 
+* Bevare of models that contain no fields, they wont work somehow! Add a dummy column in your database for safety. 
 */
 
 
@@ -375,7 +376,7 @@ class Entity {
 		}
 		
 		// Create role
-		$role = self::createRole($model, $model->id);
+		$role = self::createRole($model, $model->getLastInsertID());
 		$roles[] = &$role;
 
 		if ($previousRole != null) {
