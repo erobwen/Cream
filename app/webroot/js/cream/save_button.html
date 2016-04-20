@@ -1,0 +1,13 @@
+<span ng-if="!saver.autosave">
+	<span style="text-align:right;" title="Save your changes to server." class="btn btn-primary pull-right clearfix"
+          ng-click="saver.save()" ng-class="{'disabled' : (saver.allChangesSaved || saver.savingChanges)}">
+		<i class="fa fa-save"></i>
+		<span
+            ng-bind="saver.allChangesSaved ? 'All Changes Saved' : (saver.savingChanges ? 'Saving changes...' : 'Save changes')">All Changes Saved</span>
+	</span>
+</span>
+<span ng-if="saver.autosave" class="pull-right clearfix"
+      style="margin-left: 12px; margin-right: 12px; margin-top:7px; margin-bottom:7px; color:gray">
+	<span ng-show="saver.allChangesSaved">All changes saved</span>
+	<span ng-show="!saver.allChangesSaved"><i>Saving changes...</id></span>
+</span>

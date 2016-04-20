@@ -36,3 +36,5 @@
 *.woff binary
 *.ttf binary
 *.eot binary
+*.zip binary
+*.pptx binary
