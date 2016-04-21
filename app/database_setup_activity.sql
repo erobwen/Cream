@@ -62,7 +62,7 @@ CREATE TABLE vehicles (
 	name VARCHAR(1024) DEFAULT "Default Vehicle Name",
 
 	PRIMARY KEY(id)
-)
+);
 
 
 /* Activity base model */
