@@ -1255,7 +1255,8 @@ class Entity
 
     public function copyDependent()
     {
-        $selection = $this->selectDependent();
+		$selection = [];
+        $this->selectDependent($selection);
         return $this->copySelection($selection);
     }
 
@@ -1337,7 +1338,8 @@ class Entity
 
     public function serializeDependent()
     {
-        $selection = $this->selectDependent();
+		$selection = [];
+        $this->selectDependent($selection);
         return $this->serializeSelection($selection);
     }
 
