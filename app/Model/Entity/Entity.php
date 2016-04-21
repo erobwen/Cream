@@ -1263,10 +1263,12 @@ class Entity
     public function copySelection($idEntityMap)
     {
         // Create copies and insert them in an id map
+		pr($idEntityMap);
         $copyOfThis = null;
         $roleIdNewRoleMap = [];
-        foreach ( $idEntityMap as $entityId => $entity )
+        foreach ( $idEntityMap as $entityId => $selectionDetails )
         {
+			$entity = self::$roleIdEntityMap[$entityId];
             // pr("Create copy without relations");
             // pr($entityId);
             // pr($entity->entityId());
@@ -1278,8 +1280,9 @@ class Entity
         }
 
         // Link all objects together
-        foreach ( $idEntityMap as $entityId => $entity )
+        foreach ( $idEntityMap as $entityId => $selectionDetails )
         {
+			$entity = self::$roleIdEntityMap[$entityId];
             foreach ( $entity->roles as $role )
             {
                 $newRole = &$roleIdNewRoleMap[$role['roleId']];
