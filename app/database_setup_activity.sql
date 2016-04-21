@@ -1,4 +1,41 @@
 
+/* Changes TODO: move to a cream_database_setup file */
+DROP TABLE IF EXISTS changes;
+CREATE TABLE changes (
+	id                          MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+	/* Tracing */
+	user_id                     VARCHAR(32)                 DEFAULT NULL,
+	time                        BIGINT                      DEFAULT NULL,
+
+	/* Entity Id I.e. Project.id=13 */
+	entity_id_model             VARCHAR(128)                DEFAULT NULL,
+	entity_id_primary_key       VARCHAR(64)                 DEFAULT NULL,
+	entity_id_primary_key_value VARCHAR(64)                 DEFAULT NULL,
+
+	/* Modify & Create fields */
+	type                        VARCHAR(16)                 DEFAULT NULL, /* modify or create */
+	field_or_relation           VARCHAR(512)                DEFAULT NULL,
+	value                       TEXT                        DEFAULT NULL, /* value VARCHAR(16384) DEFAULT NULL, */
+
+	KEY (id),
+	PRIMARY KEY (entity_id_model, entity_id_primary_key_value, id)
+);
+
+/* Index TODO: move to a cream_database_setup file */
+DROP TABLE IF EXISTS indices;
+CREATE TABLE indices (
+	id                MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	entity_model_name VARCHAR(1024)               DEFAULT '',
+	entity_model_id   MEDIUMINT UNSIGNED          DEFAULT NULL,
+	dummy             BOOLEAN                     DEFAULT TRUE,
+
+	/* Model */
+	model_name        VARCHAR(128)                DEFAULT NULL,
+	conditions        VARCHAR(1024)               DEFAULT NULL,
+
+	PRIMARY KEY (id)
+);
 
 DROP TABLE IF EXISTS users;
 CREATE TABLE users (
